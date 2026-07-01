@@ -59,11 +59,15 @@ import {
 } from '../../utils/signature/serializeSignature.js'
 import { type CallErrorType, type CallParameters, call } from './call.js'
 import { type GetCodeErrorType, getCode } from './getCode.js'
-import { type ReadContractErrorType, readContract } from './readContract.js'
+import {
+  type ReadContractErrorType,
+  type ReadContractParameters,
+  readContract,
+} from './readContract.js'
 
 export type VerifyHashParameters = Pick<
   CallParameters,
-  'blockNumber' | 'blockTag'
+  'blockHash' | 'blockNumber' | 'blockTag' | 'requireCanonical'
 > & {
   /** The address that signed the original message. */
   address: Address
@@ -184,7 +188,15 @@ export async function verifyErc8010(
   client: Client,
   parameters: verifyErc8010.Parameters,
 ) {
-  const { address, blockNumber, blockTag, hash, multicallAddress } = parameters
+  const {
+    address,
+    blockHash,
+    blockNumber,
+    blockTag,
+    hash,
+    multicallAddress,
+    requireCanonical,
+  } = parameters
 
   const {
     authorization: authorization_ox,
@@ -204,11 +216,13 @@ export async function verifyErc8010(
   if (code === concatHex(['0xef0100', authorization_ox.address]))
     return await verifyErc1271(client, {
       address,
+      blockHash,
       blockNumber,
       blockTag,
       hash,
+      requireCanonical,
       signature,
-    })
+    } as verifyErc1271.Parameters)
 
   const authorization = {
     address: authorization_ox.address,
@@ -270,7 +284,10 @@ export async function verifyErc8010(
 }
 
 export namespace verifyErc8010 {
-  export type Parameters = Pick<CallParameters, 'blockNumber' | 'blockTag'> & {
+  export type Parameters = Pick<
+    CallParameters,
+    'blockHash' | 'blockNumber' | 'blockTag' | 'requireCanonical'
+  > & {
     /** The address that signed the original message. */
     address: Address
     /** The hash to be verified. */
@@ -348,7 +365,10 @@ async function verifyErc6492(
 }
 
 export namespace verifyErc6492 {
-  export type Parameters = Pick<CallParameters, 'blockNumber' | 'blockTag'> & {
+  export type Parameters = Pick<
+    CallParameters,
+    'blockHash' | 'blockNumber' | 'blockTag' | 'requireCanonical'
+  > & {
     /** The address that signed the original message. */
     address: Address
     /** The hash to be verified. */
@@ -365,7 +385,15 @@ export async function verifyErc1271(
   client: Client,
   parameters: verifyErc1271.Parameters,
 ) {
-  const { address, blockNumber, blockTag, hash, signature } = parameters
+  const {
+    address,
+    blockHash,
+    blockNumber,
+    blockTag,
+    hash,
+    requireCanonical,
+    signature,
+  } = parameters
 
   const result = await getAction(
     client,
@@ -375,10 +403,12 @@ export async function verifyErc1271(
     address,
     abi: erc1271Abi,
     args: [hash, signature],
+    blockHash,
     blockNumber,
     blockTag,
     functionName: 'isValidSignature',
-  }).catch((error) => {
+    requireCanonical,
+  } as ReadContractParameters).catch((error) => {
     if (error instanceof ContractFunctionExecutionError)
       throw new VerificationError()
     throw error
@@ -389,7 +419,10 @@ export async function verifyErc1271(
 }
 
 export namespace verifyErc1271 {
-  export type Parameters = Pick<CallParameters, 'blockNumber' | 'blockTag'> & {
+  export type Parameters = Pick<
+    CallParameters,
+    'blockHash' | 'blockNumber' | 'blockTag' | 'requireCanonical'
+  > & {
     /** The address that signed the original message. */
     address: Address
     /** The hash to be verified. */
