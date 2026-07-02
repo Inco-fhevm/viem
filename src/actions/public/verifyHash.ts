@@ -59,11 +59,7 @@ import {
 } from '../../utils/signature/serializeSignature.js'
 import { type CallErrorType, type CallParameters, call } from './call.js'
 import { type GetCodeErrorType, getCode } from './getCode.js'
-import {
-  type ReadContractErrorType,
-  type ReadContractParameters,
-  readContract,
-} from './readContract.js'
+import { type ReadContractErrorType, readContract } from './readContract.js'
 
 export type VerifyHashParameters = Pick<
   CallParameters,
@@ -222,7 +218,7 @@ export async function verifyErc8010(
       hash,
       requireCanonical,
       signature,
-    } as verifyErc1271.Parameters)
+    })
 
   const authorization = {
     address: authorization_ox.address,
@@ -408,7 +404,7 @@ export async function verifyErc1271(
     blockTag,
     functionName: 'isValidSignature',
     requireCanonical,
-  } as ReadContractParameters).catch((error) => {
+  }).catch((error) => {
     if (error instanceof ContractFunctionExecutionError)
       throw new VerificationError()
     throw error
